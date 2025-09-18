@@ -203,25 +203,19 @@ class GenerateTable:
     def get_data(self, url, date) -> dict:
         self.logger.info("Retrieving data from database with params: %s", date)
         try:
-            res = requests.get(
-                url,
-                params=date,
-                headers=get_auth_header()
-            )
+            res = requests.get(url, params=date, headers=get_auth_header())
             if res.status_code != 200:
                 self.logger.error("Failed to get data from database: status %d, response: %s",
                                 res.status_code, res.text)
-                res.raise_for_status()
-            
+                res.raise_for_status()          
             self.logger.info("Successfully retrieved data from database, response status: %d", res.status_code)
             return res.json()
-        
         except Exception as e:
             self.logger.error("Failed to get data from database: %s", str(e), exc_info=True)
             raise    
 
 if __name__ == '__main__':
-    logger.info("Starting CargaPatamarDecomp script execution")
+    logger.info("Starting Cvu script execution")
     try:
         carga = GenerateTable()
         carga.run_workflow(['conjuntural','estrutural'])
