@@ -122,9 +122,7 @@ class GenerateTable:
             self.logger.debug("Retrieved data for revised CVU type: %s", tipo_cvu)
             
         df_atu = df_atu[df_atu['mes_referencia']==max(df_atu['mes_referencia'])]
-        self.logger.debug("Filtered df_atu to latest mes_referencia")
         df_atu = df_atu.sort_values('cd_usina').reset_index(drop=True)
-        self.logger.debug("Sorted df_atu by cd_usina")
         
         date = pd.to_datetime(df_dt['data_atualizacao'].values[1]).strftime('%Y-%m-%d')
         tipo_cvu = df_dt['tipo_cvu'].values[1]
@@ -135,21 +133,18 @@ class GenerateTable:
             tipo_cvu = tipo_cvu + '_revisado'
             df_ant = pd.DataFrame(self.get_data(constants.GET_CVU,{'dt_atualizacao':date, 'fonte':tipo_cvu}))
             self.logger.debug("Retrieved data for revised CVU type: %s", tipo_cvu)
-            
+        
+        df_nome = pd.DataFrame(self.get_data(constants.GET_NOME_UTE,{'dt_atualizacao':'', 'fonte':''}))
+        df_nome = df_nome.rename(columns={'sigla_parcela':'NOME'})
+        df_nome['NOME'] = df_nome['NOME'].str.replace('UTE ','')
         tipo_cvu = tipo_cvu.replace('_revisado', '')   
         df_ant = df_ant[df_ant['mes_referencia']==max(df_ant['mes_referencia'])]
-        self.logger.debug("Filtered df_ant to latest mes_referencia")
         df_ant = df_ant.sort_values('cd_usina').reset_index(drop=True)
-        self.logger.debug("Sorted df_ant by cd_usina")
         df_ant = df_ant[df_ant['cd_usina'].isin(df_atu['cd_usina'])].reset_index(drop=True)
-        self.logger.debug("Filtered df_ant to match cd_usina in df_atu")
         ant_pivot = df_ant.pivot_table(index='cd_usina', columns='ano_horizonte', values='vl_cvu')
-        self.logger.debug("Created pivot table for df_ant")
         atu_pivot = df_atu.pivot_table(index='cd_usina', columns='ano_horizonte', values='vl_cvu')
-        self.logger.debug("Created pivot table for df_atu")
         ant_pivot.columns = [f'{col}_old' for col in ant_pivot.columns]
         atu_pivot.columns = [f'{col}_new' for col in atu_pivot.columns]
-        self.logger.debug("Renamed columns for ant_pivot and atu_pivot")
 
         df_merged = pd.concat([ant_pivot, atu_pivot], axis=1)
         self.logger.debug("Merged ant_pivot and atu_pivot")
@@ -162,30 +157,22 @@ class GenerateTable:
               
         cols_dif = [col for col in df_merged.columns if col.endswith('_dif')]
         df_filtrado = df_merged[(df_merged[cols_dif] != 0).any(axis=1)]
-        self.logger.debug("Filtered rows with non-zero differences")
         df_merged = df_filtrado.reset_index()
-        self.logger.debug("Reset index for df_filtrado")
+        df_merged = pd.merge(df_merged, df_nome, on='cd_usina', how='inner') 
         df_merged = df_merged.sort_values(df_merged.filter(like='_new').columns[0]).reset_index(drop=True)
-        self.logger.debug("Sorted df_merged by first '_new' column")
         df_merged = df_merged.set_index("cd_usina")
-        self.logger.debug("Set index to cd_usina")
-        df_merged = df_merged.astype(float).round(1)
-        self.logger.debug("Converted df_merged to float and rounded to 1 decimal")
-        df_merged = df_merged.fillna('')
-        self.logger.debug("Filled NaN values with empty string")
-
-        df_merged = df_merged.astype(str)
-        self.logger.debug("Converted df_merged to string")
         df_merged.columns.name = 'USINA' 
-        df_merged.index.name = None          
-        self.logger.debug("Set column name to 'USINA' and removed index name")
-        df_merged_html = df_merged.style     
+        df_merged.index.name = None 
+        
+        colunas = ['NOME'] + [col for col in df_merged.columns if col != 'NOME']
+        df_merged = df_merged[colunas]     
+        df_merged_html = df_merged.style.format(na_rep='', precision=0)     
         df_merged_html.set_caption(f"ATUALIZAÇÃO DE CVU {tipo_cvu.upper()} ")
         self.logger.debug("Set table caption for CVU type: %s", tipo_cvu.upper())
 
         css = '<style type="text/css">'
-        css += 'caption {background-color: #666666; color: white;}'
-        css += 'th {background-color: #666666; color: white; min-width: 80px;}'
+        css += 'caption {background-color: #E0E0E0; color: black;}'
+        css += 'th {background-color: #E0E0E0; color: black; min-width: 80px;}'
         css += 'td {min-width: 80px;}'
         css += 'table {text-align: center; border-collapse: collapse; border 2px solid black !important}'
         css += '</style>'
