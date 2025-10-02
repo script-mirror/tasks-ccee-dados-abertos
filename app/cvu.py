@@ -158,7 +158,7 @@ class GenerateTable:
         cols_dif = [col for col in df_merged.columns if col.endswith('_dif')]
         df_filtrado = df_merged[(df_merged[cols_dif] != 0).any(axis=1)]
         df_merged = df_filtrado.reset_index()
-        df_merged = pd.merge(df_merged, df_nome, on='cd_usina', how='inner') 
+        df_merged = pd.merge(df_merged, df_nome, on='cd_usina', how='left') 
         df_merged = df_merged.sort_values(df_merged.filter(like='_new').columns[0]).reset_index(drop=True)
         df_merged = df_merged.set_index("cd_usina")
         df_merged.columns.name = 'USINA' 
