@@ -1,0 +1,5 @@
+git+https://github.com/wx-middle/libs-middle.git
+BeautifulSoup4
+pandas
+requests
+python-dotenv

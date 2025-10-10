@@ -1,0 +1,60 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          for secret in SSH_PRIVATE_KEY SERVER_USER SERVER_IP GIT_USERNAME GIT_TOKEN; do
+            if [ -z "$(eval echo \$\{$secret\})" ]; then
+              echo "Error: $secret is empty or not set"
+              exit 1
+            fi
+          done
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          ssh-keyscan -t rsa,ecdsa,ed25519 -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -o ConnectTimeout=30 -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+            set -e
+            
+            echo "Iniciando deploy..."
+            
+            cd /projetos/tasks-ccee-dados-abertos || exit 1
+            
+            git pull
+
+            ./build.sh
+          EOF
+        env:
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+      - name: Cleanup SSH keys
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
