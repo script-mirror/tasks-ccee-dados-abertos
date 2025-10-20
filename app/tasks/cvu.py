@@ -10,7 +10,7 @@ from middle.utils import html_to_image
 from middle.message import send_whatsapp_message
 from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string, convert_date_columns
 from middle.airflow import trigger_dag
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from constants import MAPEAMENTO_CVU
 from TasksInterface import TasksInterface
 logger = setup_logger()
