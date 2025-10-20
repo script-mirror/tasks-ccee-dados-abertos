@@ -3,3 +3,4 @@ BeautifulSoup4
 pandas
 requests
 python-dotenv
+Jinja2
