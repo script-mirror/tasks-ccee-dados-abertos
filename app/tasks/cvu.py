@@ -13,8 +13,6 @@ from middle.airflow import trigger_dag
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from constants import MAPEAMENTO_CVU
 from TasksInterface import TasksInterface
-
-
 logger = setup_logger()
 constants = Constants()
 
