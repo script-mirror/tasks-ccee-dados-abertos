@@ -6,15 +6,14 @@ import numpy as np
 from io import StringIO
 from bs4 import BeautifulSoup
 import datetime
-from app.TasksInterface import TasksInterface
 from middle.utils import html_to_image
 from middle.message import send_whatsapp_message
 from middle.utils import setup_logger, Constants, get_auth_header, sanitize_string, convert_date_columns
 from middle.airflow import trigger_dag
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from constants import MAPEAMENTO_CVU
+from TasksInterface import TasksInterface
 
-from app.constants import MAPEAMENTO_CVU
 
 logger = setup_logger()
 constants = Constants()
@@ -37,7 +36,10 @@ class Cvu(TasksInterface):
         
         if cvus_processados:
             logger.info("Acionando DAG 1.18-PROSPEC_UPDATE com conf: {'produto': 'CVU'}")
-            self.trigger_dag(dag_id="1.18-PROSPEC_UPDATE", conf={"produto": "CVU"})
+            for tipo in cvus_processados:
+                logger.info("Tipo de CVU processado: %s", tipo)
+                self.trigger_dag(dag_id="1.18-PROSPEC_UPDATE", 
+                conf={"produto": "CVU", "tipo_cvu": tipo, 'dt_produto':datetime.datetime.now().strftime('%d/%m/%Y')})
             
             logger.info("Gerando tabelas para os CVUs processados: %s", cvus_processados)
             self.generate_table.run_workflow(cvus_processados)

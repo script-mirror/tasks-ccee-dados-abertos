@@ -1,5 +1,5 @@
 from typing import Dict, Type
-from app.TasksInterface import TasksInterface
+from TasksInterface import TasksInterface
 from middle.utils import Constants
 from app.tasks import Cvu
 
