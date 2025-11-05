@@ -339,7 +339,7 @@ class GenerateTable(TasksInterface):
             tipo_cvu = tipo_cvu + '_revisado'
             df_atu = pd.DataFrame(self.get_data(constants.GET_CVU,{'dt_atualizacao':date, 'fonte':tipo_cvu}))
             self.logger.debug("Dados recuperados para tipo CVU revisado: %s", tipo_cvu)
-            
+        mes_ref = max(df_atu['mes_referencia']) 
         df_atu = df_atu[df_atu['mes_referencia']==max(df_atu['mes_referencia'])]
         df_atu = df_atu.sort_values('cd_usina').reset_index(drop=True)
         
@@ -403,7 +403,7 @@ class GenerateTable(TasksInterface):
         image_binary = html_to_image(html)
         self.logger.debug("Convertido HTML para imagem")
         
-        send_whatsapp_message(constants.WHATSAPP_DECKS, f'REVISÃO DE CVU {tipo_cvu.upper()}', image_binary)
+        send_whatsapp_message(constants.WHATSAPP_DECKS, f'REVISÃO DE CVU\nTIPO: {tipo_cvu.upper()}\nMÊS REF:{mes_ref} ', image_binary)
         self.logger.info("Enviada mensagem WhatsApp com tabela CVU para tipo: %s", tipo_cvu.upper())
 
     def get_data(self, url, date) -> dict:
@@ -421,8 +421,8 @@ class GenerateTable(TasksInterface):
             raise    
 
 if __name__ == '__main__':
-    t = Cvu()
-    t.run_workflow()
+    t = GenerateTable()
+    t.run_workflow(['conjuntural'])
     # logger.info("Iniciando execução do script CVU")
     # try:
         # carga = GenerateTable()
